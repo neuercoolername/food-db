@@ -16,5 +16,22 @@ model Recipe {
   title String
   author String
   instructions String
-  ingredients String
+  ingredients String // Keep for backward compatibility
+  servings Int @default(4)
+  prepTime Int? // in minutes
+  cookTime Int? // in minutes
+  structuredIngredients Ingredient[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ingredient {
+  id Int @id @default(autoincrement())
+  amount Float
+  unit String
+  name String
+  optional Boolean @default(false)
+  notes String?
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId Int
 }
