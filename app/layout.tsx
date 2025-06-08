@@ -4,6 +4,8 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Container } from '@mui/material';
 import theme from './theme';
+import { AuthProvider } from './contexts/AuthContext';
+import AuthWrapper from './components/AuthWrapper';
 import Navbar from './components/Navbar';
 import "./globals.css";
 
@@ -23,10 +25,14 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Navbar />
-            <Container maxWidth="xl" sx={{ py: 4 }}>
-              {children}
-            </Container>
+            <AuthProvider>
+              <AuthWrapper>
+                <Navbar />
+                <Container maxWidth="xl" sx={{ py: 4 }}>
+                  {children}
+                </Container>
+              </AuthWrapper>
+            </AuthProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>
