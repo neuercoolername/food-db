@@ -30,7 +30,7 @@ export default function LoginForm() {
         setError('Incorrect password. Please try again.')
         setPassword('')
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
       setPassword('')
     } finally {
