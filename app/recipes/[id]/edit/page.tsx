@@ -13,6 +13,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { Save, ArrowBack } from '@mui/icons-material'
+import IngredientInput, { StructuredIngredient } from '../../../components/IngredientInput'
 
 interface Recipe {
   id: string
@@ -20,6 +21,10 @@ interface Recipe {
   author: string
   instructions: string
   ingredients: string
+  servings?: number
+  prepTime?: number
+  cookTime?: number
+  structuredIngredients?: StructuredIngredient[]
 }
 
 export default function EditRecipePage() {
@@ -28,7 +33,11 @@ export default function EditRecipePage() {
     author: '',
     instructions: '',
     ingredients: '',
+    servings: 4,
+    prepTime: undefined as number | undefined,
+    cookTime: undefined as number | undefined,
   })
+  const [structuredIngredients, setStructuredIngredients] = useState<StructuredIngredient[]>([])
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -46,7 +55,11 @@ export default function EditRecipePage() {
           author: recipe.author,
           instructions: recipe.instructions,
           ingredients: recipe.ingredients,
+          servings: recipe.servings || 4,
+          prepTime: recipe.prepTime,
+          cookTime: recipe.cookTime,
         })
+        setStructuredIngredients(recipe.structuredIngredients || [])
       } else if (response.status === 404) {
         router.push('/recipes')
       }
@@ -58,10 +71,19 @@ export default function EditRecipePage() {
   }, [params.id, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+    
+    if (name === 'servings' || name === 'prepTime' || name === 'cookTime') {
+      setFormData({
+        ...formData,
+        [name]: value === '' ? undefined : parseInt(value),
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      })
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,12 +91,23 @@ export default function EditRecipePage() {
     setLoading(true)
 
     try {
+      const payload = {
+        ...formData,
+        structuredIngredients: structuredIngredients.map(ing => ({
+          amount: ing.amount,
+          unit: ing.unit,
+          name: ing.name,
+          optional: ing.optional,
+          notes: ing.notes,
+        })),
+      }
+
       const response = await fetch(`/api/recipes/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
@@ -138,17 +171,40 @@ export default function EditRecipePage() {
                 required
               />
             </Box>
+
+            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+              <TextField
+                label="Servings"
+                name="servings"
+                type="number"
+                value={formData.servings}
+                onChange={handleChange}
+                inputProps={{ min: 1 }}
+                sx={{ width: 120 }}
+              />
+              <TextField
+                label="Prep Time (minutes)"
+                name="prepTime"
+                type="number"
+                value={formData.prepTime || ''}
+                onChange={handleChange}
+                inputProps={{ min: 0 }}
+                sx={{ width: 180 }}
+              />
+              <TextField
+                label="Cook Time (minutes)"
+                name="cookTime"
+                type="number"
+                value={formData.cookTime || ''}
+                onChange={handleChange}
+                inputProps={{ min: 0 }}
+                sx={{ width: 180 }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="Ingredients"
-              name="ingredients"
-              value={formData.ingredients}
-              onChange={handleChange}
-              multiline
-              rows={6}
-              required
-              helperText="List each ingredient on a new line with quantities"
+            <IngredientInput
+              ingredients={structuredIngredients}
+              onChange={setStructuredIngredients}
             />
             
             <TextField
